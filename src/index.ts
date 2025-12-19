@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 import type { Command } from "./types.js";
 import WebSocket from 'ws';
+import { connect } from "./temp/mongo.js"
 
 config();
 
@@ -18,6 +19,9 @@ const stream = new Misskey.Stream(origin, { token }, {
 const commands = new Map<string, Command>();
 
 async function init() {
+    connect();
+    console.log("MongoDBに接続しました。")
+
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
     const commandsPath = path.join(__dirname, 'commands');
     const files = await fs.readdir(commandsPath);
