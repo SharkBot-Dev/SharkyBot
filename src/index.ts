@@ -38,7 +38,12 @@ async function init() {
     createStream();
 }
 
+let reconnecting = false;
+
 function createStream() {
+    if (reconnecting) return;
+    reconnecting = true;
+
     console.log("MisskeyStreamに接続しています・・");
 
     stream?.close?.();
@@ -51,7 +56,6 @@ function createStream() {
 
     stream.on("_disconnected_", () => {
         console.log("MisskeyStreamから切断されました・・再接続しています・・");
-        setTimeout(createStream, 3000);
     });
 
     const mainChannel = stream.useChannel("main");

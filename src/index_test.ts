@@ -51,7 +51,6 @@ function createStream() {
 
     stream.on("_disconnected_", () => {
         console.log("MisskeyStreamから切断されました・・再接続しています・・");
-        setTimeout(createStream, 3000);
     });
 
     const mainChannel = stream.useChannel("main");
