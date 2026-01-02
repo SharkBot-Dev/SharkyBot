@@ -9,8 +9,8 @@ import { connect } from "./temp/mongo.js"
 
 config();
 
-const origin = process.env.MAIN_URL as string;
-const token = process.env.MAIN_TOKEN as string;
+const origin = process.env.URL as string;
+const token = process.env.TOKEN as string;
 
 const cli = new Misskey.api.APIClient({ origin, credential: token });
 const stream = new Misskey.Stream(origin, { token }, {
