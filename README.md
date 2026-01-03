@@ -20,6 +20,8 @@ ping | Pong!と返します。
 now | 現在時刻を返します。
 roll | さいころです
 wiki | Wikiを検索します。
+server | Misskeyサーバー情報を取得します。
+omikuji | おみくじを引きます。
 ```
 
 ### 経済コマンド
