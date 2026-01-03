@@ -6,6 +6,8 @@ import { fileURLToPath, pathToFileURL } from "url";
 import type { Command } from "./types.js";
 import WebSocket from "ws";
 import { connect as connectMongo } from "./temp/mongo.js";
+import express from "express";
+import { createRouter } from "./web/index.js";
 
 config();
 
@@ -97,7 +99,21 @@ function createStream() {
     });
 }
 
+async function startWeb() {
+    const app = express();
+
+    const router = await createRouter();
+    app.use(router);
+
+    app.listen(5010, () => {
+        console.log("Webサーバーを5010ポートに立ち上げました。");
+    });
+}
+
 process.on("uncaughtException", console.error);
 process.on("unhandledRejection", console.error);
 
-init();
+(async () => {
+  await init();
+  startWeb();
+})();

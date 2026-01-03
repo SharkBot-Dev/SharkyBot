@@ -1,13 +1,11 @@
 import type { Command } from '../types.js';
 
 export const command: Command = {
-    name: 'now',
+    name: 'github',
     execute: async (note, args, stream, cli) => {
-        var dt = new Date();
-
         await cli.request('notes/create', {
             replyId: note.id,
-            text: `現在時刻: ${dt.toLocaleString("ja")}`
+            text: `以下からアクセスできます。\nhttps://misskey.shb.red/redirect/github`
         });
     }
 };
