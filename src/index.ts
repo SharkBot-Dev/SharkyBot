@@ -105,6 +105,10 @@ async function startWeb() {
     const router = await createRouter();
     app.use(router);
 
+    app.get("/", (req, res) => {
+        res.send("Misskey用Botのサーバーです。<br>ここには何もありません。")
+    })
+
     app.listen(5010, () => {
         console.log("Webサーバーを5010ポートに立ち上げました。");
     });
