@@ -3,10 +3,11 @@ import { config } from "dotenv";
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath, pathToFileURL } from "url";
-import type { Command } from "./types.js";
 import WebSocket from "ws";
-import { connect as connectMongo } from "./temp/mongo.js";
 import express from "express";
+
+import Plugin from "./plugin.js";
+import { connect as connectMongo } from "./temp/mongo.js";
 import { createRouter } from "./web/index.js";
 
 config();
@@ -15,7 +16,9 @@ const origin = process.env.URL as string;
 const token = process.env.TOKEN as string;
 
 const cli = new Misskey.api.APIClient({ origin, credential: token });
-const commands = new Map<string, Command>();
+
+const plugins: Plugin[] = [];
+const commands = new Map<string, any>();
 
 let stream: Misskey.Stream | null = null;
 
@@ -24,43 +27,51 @@ async function init() {
     console.log("MongoDBに接続しました。");
 
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
-    const commandsPath = path.join(__dirname, "commands");
-    const files = await fs.readdir(commandsPath);
+    const pluginsPath = path.join(__dirname, "plugins");
+    const files = await fs.readdir(pluginsPath);
     const jsFiles = files.filter(f => f.endsWith(".js"));
 
     for (const file of jsFiles) {
-        const fileUrl = pathToFileURL(path.join(commandsPath, file)).href;
+        const fileUrl = pathToFileURL(path.join(pluginsPath, file)).href;
         const module = await import(fileUrl);
-        const cmd: Command = module.command;
-        commands.set(cmd.name, cmd);
+
+        if (module.default && typeof module.default === 'function') {
+            const pluginInstance: Plugin = new module.default();
+            
+            await pluginInstance.init();
+            console.log(`プラグイン ${pluginInstance.name.toLowerCase()}をロードしました。`)
+            
+            pluginInstance.commands.forEach(cmd => {
+                commands.set(cmd.name.toLowerCase(), { 
+                    execute: cmd.execute, 
+                    plugin: pluginInstance 
+                });
+            });
+
+            plugins.push(pluginInstance);
+        }
     }
 
-    console.log(`${commands.size}個のコマンドをロードしました。`);
-
+    console.log(`${plugins.length}個のプラグインをロードしました。`);
     createStream();
 }
 
 function createStream() {
     console.log("MisskeyStreamに接続しています・・");
-
-    stream?.close?.();
-
     stream = new Misskey.Stream(origin, { token }, { WebSocket });
 
     stream.on("_connected_", () => {
         console.log("MisskeyStreamに接続しました。");
-    });
-
-    stream.on("_disconnected_", () => {
-        console.log("MisskeyStreamから切断されました・・再接続しています・・");
+        plugins.forEach(p => p.emit("ready"));
     });
 
     const mainChannel = stream.useChannel("main");
-
     const COOLDOWN_TIME = 5000;
     const cooldowns = new Map<string, number>();
 
     mainChannel.on("notification", async (notification) => {
+        plugins.forEach(p => p.emit("notification", notification));
+
         if (notification.type !== "mention") return;
 
         const note = notification.note;
@@ -68,45 +79,33 @@ function createStream() {
 
         const userId = note.userId;
         const now = Date.now();
-        const lastRun = cooldowns.get(userId) || 0;
-        if (now - lastRun < COOLDOWN_TIME) return;
+        if (now - (cooldowns.get(userId) || 0) < COOLDOWN_TIME) return;
 
-        const cleanText = note.text
-            .replace(/@[\w.-]+(?:@[\w.-]+)?\s*/g, "")
-            .trim();
-
+        const cleanText = note.text.replace(/@[\w.-]+(?:@[\w.-]+)?\s*/g, "").trim();
         if (!cleanText.startsWith("/")) return;
 
         const args = cleanText.slice(1).split(/\s+/);
         const commandName = args.shift()?.toLowerCase();
-        if (!commandName) return;
-
-        const command = commands.get(commandName);
-        if (!command) return;
-
-        try {
-            cooldowns.set(userId, now);
-            await command.execute(note, args, stream!, cli);
-            console.log(`Command success: ${commandName}`);
-        } catch (err) {
-            console.error("Command error:", err);
+        
+        if (commandName && commands.has(commandName)) {
+            const cmd = commands.get(commandName);
+            try {
+                cooldowns.set(userId, now);
+                await cmd.execute(note, args, stream!, cli);
+                console.log(`Command success: ${commandName} (via ${cmd.plugin.name})`);
+            } catch (err) {
+                console.error(`Command error [${commandName}]:`, err);
+            }
         }
     });
 }
 
 async function startWeb() {
     const app = express();
-
     const router = await createRouter();
     app.use(router);
-
-    app.get("/", (req, res) => {
-        res.send("Misskey用Botのサーバーです。<br>ここには何もありません。")
-    })
-
-    app.listen(5010, () => {
-        console.log("Webサーバーを5010ポートに立ち上げました。");
-    });
+    app.get("/", (req, res) => res.send("Misskey Bot Server Running."));
+    app.listen(5010, () => console.log("Webサーバー起動: 5010"));
 }
 
 process.on("uncaughtException", console.error);

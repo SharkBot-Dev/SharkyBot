@@ -1,5 +1,4 @@
-import type { Command } from '../types.js';
-import { mongo } from "./../temp/mongo.js";
+import Plugin from "./../plugin.js"
 
 import { createCanvas, loadImage, registerFont, Canvas, CanvasRenderingContext2D, Image as CanvasImage } from 'canvas';
 import axios from 'axios';
@@ -202,48 +201,56 @@ export async function createQuoteImage(
     return canvas.toBuffer('image/png');
 }
 
-export const command: Command = {
-    name: 'miq',
-    execute: async (note, args, stream, cli) => {
-        const reply = note.reply;
-        
-        if (!reply || !reply.text) return;
-
-        try {
-            const response = await fetch(reply.user.avatarUrl);
-            if (!response.ok) {
-                return;
-            };
-            
-            const arrayBuffer = await response.arrayBuffer();
-            const avBuffer = Buffer.from(arrayBuffer);
-
-            const quoteImage = await createQuoteImage(
-                reply.user.username,
-                reply.text,
-                avBuffer,
-                "rgb(0, 0, 0)",
-                "rgb(255, 255, 255)",
-                true,
-                false
-            );
-
-            const imageBuffer = Buffer.from(quoteImage);
-
-            const file = await cli.request("drive/files/create", {
-                file: new Blob([imageBuffer], { type: 'image/png' }),
-                name: `quote_${Date.now()}.png`,
-                isSensitive: true
-            });
-
-            await cli.request('notes/create', {
-                text: "名言を生成しました。",
-                fileIds: [file.id],
-                replyId: note.id
-            });
-
-        } catch (error) {
-            console.error("Error in miq command:", error);
-        }
+export default class Miq extends Plugin {
+    constructor() {
+        super("miq");
     }
-};
+
+    async init() {
+        this.addCommand({
+            name: "miq",
+            execute: async (note, args, stream, cli) => {
+                const reply = note.reply;
+                
+                if (!reply || !reply.text) return;
+
+                try {
+                    const response = await fetch(reply.user.avatarUrl);
+                    if (!response.ok) {
+                        return;
+                    };
+                    
+                    const arrayBuffer = await response.arrayBuffer();
+                    const avBuffer = Buffer.from(arrayBuffer);
+
+                    const quoteImage = await createQuoteImage(
+                        reply.user.username,
+                        reply.text,
+                        avBuffer,
+                        "rgb(0, 0, 0)",
+                        "rgb(255, 255, 255)",
+                        true,
+                        false
+                    );
+
+                    const imageBuffer = Buffer.from(quoteImage);
+
+                    const file = await cli.request("drive/files/create", {
+                        file: new Blob([imageBuffer], { type: 'image/png' }),
+                        name: `quote_${Date.now()}.png`,
+                        isSensitive: true
+                    });
+
+                    await cli.request('notes/create', {
+                        text: "名言を生成しました。",
+                        fileIds: [file.id],
+                        replyId: note.id
+                    });
+
+                } catch (error) {
+                    console.error("Error in miq command:", error);
+                }
+            }
+        })
+    }
+}

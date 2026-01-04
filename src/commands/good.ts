@@ -7,7 +7,5 @@ export const command: Command = {
             noteId: note.id,
             reaction: '👍'
         });
-
-        console.log(`リアクションしました: ${note.id}`);
     }
 };
