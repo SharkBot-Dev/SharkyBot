@@ -4,11 +4,9 @@ import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath, pathToFileURL } from "url";
 import WebSocket from "ws";
-import express from "express";
 
 import Plugin from "./plugin.js";
 import { connect as connectMongo } from "./temp/mongo.js";
-import { createRouter } from "./web/index.js";
 
 config();
 
@@ -100,18 +98,9 @@ function createStream() {
     });
 }
 
-async function startWeb() {
-    const app = express();
-    const router = await createRouter();
-    app.use(router);
-    app.get("/", (req, res) => res.send("Misskey Bot Server Running."));
-    app.listen(5010, () => console.log("Webサーバー起動: 5010"));
-}
-
 process.on("uncaughtException", console.error);
 process.on("unhandledRejection", console.error);
 
 (async () => {
   await init();
-  startWeb();
 })();

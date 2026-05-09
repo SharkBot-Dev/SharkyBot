@@ -1,7 +1,6 @@
 {
   "dependencies": {
     "@types/express": "^5.0.6",
-    "axios": "^1.13.2",
     "canvas": "^3.2.0",
     "cheerio": "^1.1.2",
     "date-utils": "^1.2.21",
