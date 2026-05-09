@@ -67,19 +67,18 @@ function createStream() {
     const COOLDOWN_TIME = 5000;
     const cooldowns = new Map<string, number>();
 
-    mainChannel.on("notification", async (notification) => {
-        plugins.forEach(p => p.emit("notification", notification));
+    mainChannel.on("mention", async (payload) => {
+        plugins.forEach(p => p.emit("mention", payload));
 
-        if (notification.type !== "mention") return;
+        if (!payload.text) return;
 
-        const note = notification.note;
-        if (!note.text || note.user.isBot) return;
+        if (payload.user.isBot) return;
 
-        const userId = note.userId;
+        const userId = payload.user.id;
         const now = Date.now();
         if (now - (cooldowns.get(userId) || 0) < COOLDOWN_TIME) return;
 
-        const cleanText = note.text.replace(/@[\w.-]+(?:@[\w.-]+)?\s*/g, "").trim();
+        const cleanText = payload.text.replace(/@[\w.-]+(?:@[\w.-]+)?\s*/g, "").trim();
         if (!cleanText.startsWith("/")) return;
 
         const args = cleanText.slice(1).split(/\s+/);
@@ -89,7 +88,7 @@ function createStream() {
             const cmd = commands.get(commandName);
             try {
                 cooldowns.set(userId, now);
-                await cmd.execute(note, args, stream!, cli);
+                await cmd.execute(payload, args, stream!, cli);
                 console.log(`Command success: ${commandName} (via ${cmd.plugin.name})`);
             } catch (err) {
                 console.error(`Command error [${commandName}]:`, err);
