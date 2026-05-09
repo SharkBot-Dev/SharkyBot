@@ -36,7 +36,7 @@ export default class Help extends Plugin {
             execute: async (note, args, stream, cli) => {
                 await cli.request('notes/create', {
                     replyId: note.id,
-                    text: `以下からアクセスできます。\nhttps://misskey.shb.red/redirect/github`
+                    text: `以下からアクセスできます。\nhttps://github.com/SharkBot-Dev/SharkyBot`
                 });
             }
         })
