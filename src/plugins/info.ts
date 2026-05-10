@@ -64,7 +64,8 @@ export default class Info extends Plugin {
                         `🔍 **${target.name || target.username}** の情報が見つかりました`,
                         `ID: \`${target.id}\``,
                         `ユーザー名: ${target.username}`,
-                        `Botか: ${target.isBot}`
+                        `Botか: ${target.isBot}`,
+                        `ネコか: ${target.isCat}`
                     ].join('\n');
 
                     await cli.request('notes/create', {
