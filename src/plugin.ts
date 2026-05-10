@@ -1,9 +1,5 @@
 import * as Misskey from 'misskey-js';
-
-export interface Command {
-    name: string;
-    execute: (note: Misskey.entities.Note, args: string[], stream: Misskey.Stream, client: Misskey.api.APIClient) => Promise<void> | void;
-}
+import type { Command } from './types.js';
 
 export interface PluginEvent {
     eventName: string;
