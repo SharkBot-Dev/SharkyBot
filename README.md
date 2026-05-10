@@ -17,6 +17,8 @@ user | Misskeyのユーザーを検索します。
 ping | Pong!と返します。
 now | 現在時刻を返します。
 wiki | Wikiを検索します。
+source | このBotのソースコードを表示します。
+github | Githubレポジトリを検索します。
 server | Misskeyサーバー情報を取得します。
 news | トップニュースを取得します。
 ```

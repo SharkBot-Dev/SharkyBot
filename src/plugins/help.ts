@@ -32,7 +32,7 @@ export default class Help extends Plugin {
         })
 
         this.addCommand({
-            name: "github",
+            name: "source",
             execute: async (note, args, stream, cli) => {
                 await cli.request('notes/create', {
                     replyId: note.id,
