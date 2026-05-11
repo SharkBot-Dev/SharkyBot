@@ -1,6 +1,6 @@
 import Plugin from "./../plugin.js"
 
-export default class _5000 extends Plugin {
+export default class MakeItAQuote extends Plugin {
     constructor() {
         super("Make it a Quote");
     }
